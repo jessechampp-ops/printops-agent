@@ -1,3 +1,5 @@
+using System.IO;
+using System.Net.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
