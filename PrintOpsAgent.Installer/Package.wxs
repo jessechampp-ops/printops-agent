@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="PrintOps Agent"
+           Manufacturer="PrintOps"
+           Version="1.0.0.0"
+           UpgradeCode="A1B2C3D4-5678-90AB-CDEF-1234567890AB"
+           Language="1033"
+           Codepage="1252">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="PrintOps Agent" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+      <ComponentRef Id="ServiceComponent" />
+      <ComponentRef Id="ConfigComponent" />
+    </Feature>
+
+    <Property Id="APIKEY" Value="" Secure="yes" />
+    <Property Id="DASHBOARDURL" Value="" Secure="yes" />
+
+    <!-- Custom action to configure agent after install -->
+    <CustomAction Id="ConfigureAgent"
+                  Directory="INSTALLFOLDER"
+                  ExeCommand="[INSTALLFOLDER]PrintOpsAgent.exe configure --api-key &quot;[APIKEY]&quot; --url &quot;[DASHBOARDURL]&quot;"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="ConfigureAgent" Before="StartServices">
+        <![CDATA[APIKEY <> "" AND DASHBOARDURL <> ""]]>
+      </Custom>
+    </InstallExecuteSequence>
+
+  </Package>
+
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="PrintOps Agent" />
+    </StandardDirectory>
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="PrintOpsDataFolder" Name="PrintOps" />
+    </StandardDirectory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="MainExecutable" Guid="B1C2D3E4-5678-90AB-CDEF-1234567890AB">
+        <File Id="PrintOpsAgentExe"
+              Source="$(var.PrintOpsAgent.TargetDir)\PrintOpsAgent.exe"
+              KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <Component Id="ServiceComponent" Directory="INSTALLFOLDER" Guid="C1D2E3F4-5678-90AB-CDEF-1234567890AB">
+      <ServiceInstall Id="PrintOpsAgentService"
+                      Type="ownProcess"
+                      Name="PrintOpsAgent"
+                      DisplayName="PrintOps Agent"
+                      Description="PrintOps Windows Print Management Agent - Provides remote printer monitoring and management capabilities"
+                      Start="auto"
+                      Account="LocalSystem"
+                      ErrorControl="normal" />
+      <ServiceControl Id="StartPrintOpsAgent"
+                      Name="PrintOpsAgent"
+                      Start="install"
+                      Stop="both"
+                      Remove="uninstall"
+                      Wait="yes" />
+    </Component>
+
+    <Component Id="ConfigComponent" Directory="PrintOpsDataFolder" Guid="D1E2F3A4-5678-90AB-CDEF-1234567890AB">
+      <CreateFolder />
+      <RemoveFolder Id="RemoveConfigFolder" On="uninstall" />
+      <RegistryValue Root="HKLM"
+                     Key="SOFTWARE\PrintOps\Agent"
+                     Name="Installed"
+                     Type="integer"
+                     Value="1"
+                     KeyPath="yes" />
+    </Component>
+  </Fragment>
+
+</Wix>
